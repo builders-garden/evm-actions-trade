@@ -7,11 +7,13 @@ export const GET = async (req: NextRequest) => {
   const tokenIn = searchParams.get("tokenIn");
   const tokenOut = searchParams.get("tokenOut");
   const amountIn = searchParams.get("amountIn");
+  const chainId = searchParams.get("chainId");
 
   const targetUrl = new URL(appURL());
   targetUrl.searchParams.set("tokenIn", tokenIn!);
   targetUrl.searchParams.set("tokenOut", tokenOut!);
   targetUrl.searchParams.set("amountIn", amountIn!);
+  targetUrl.searchParams.set("chainId", chainId!);
 
   const evmActionMetadata: EVMAction = {
     title: "1inch trade EVM Action",

@@ -7,22 +7,27 @@ import { NATIVE_ADDRESS, USDC_CONTRACT_ADDRESS_BASE } from "@/lib/constants";
 export const POST = async (req: NextRequest) => {
   const body = await req.json();
   const { address } = body;
-  console.log(address, "address");
   const { searchParams } = new URL(req.url);
 
-  // Public client
-  const publicClient = createPublicClient({ 
-    chain: base,
-    transport: http()
-  })
-
-  const tokenInput = searchParams.get('tokenIn'); //token address
-  const tokenOutput = searchParams.get('tokenOut'); //token address
-  const amountIn = searchParams.get('amountIn'); //amount in tokenIn
-  console.log(tokenInput, tokenOutput, amountIn, "tokenInput, tokenOutput, amountIn");
+  const tokenInput = searchParams.get("tokenIn"); //token address
+  const tokenOutput = searchParams.get("tokenOut"); //token address
+  const amountIn = searchParams.get("amountIn"); //amount in tokenIn
+  const chainId = searchParams.get("chainId"); //chainId
   const slippage = 30; //slippage in percentage
-  const tokenIn = tokenInput === "0x0000000000000000000000000000000000000000" ? NATIVE_ADDRESS : tokenInput;
-  const tokenOut = tokenOutput === "0x0000000000000000000000000000000000000000" ? NATIVE_ADDRESS : tokenOutput;
+  const tokenIn =
+    tokenInput === "0x0000000000000000000000000000000000000000"
+      ? NATIVE_ADDRESS
+      : tokenInput;
+  const tokenOut =
+    tokenOutput === "0x0000000000000000000000000000000000000000"
+      ? NATIVE_ADDRESS
+      : tokenOutput;
+
+  // Public client
+  const publicClient = createPublicClient({
+    chain: parseInt(chainId!) === base.id ? base : baseSepolia,
+    transport: http(),
+  });
 
   // get tokenInAddress decimals
   let tokenInDecimals = 18;
@@ -36,24 +41,23 @@ export const POST = async (req: NextRequest) => {
   const amountInParsed = parseUnits(amountIn!, tokenInDecimals);
 
   // 1inch swap request
-  const apiUrl = "https://api.1inch.dev/swap/v6.0/8453/swap";
+  const apiUrl = `https://api.1inch.dev/swap/v6.0/${chainId}/swap`;
 
   const config = {
-      headers: {
-      "Authorization": `Bearer ${process.env.ONE_INCH_API_KEY}`
-      },
-      params: {
-        "src": tokenIn,
-        "dst": tokenOut,
-        "amount": amountInParsed.toString(),
-        "from": address,
-        "origin": address,
-        "slippage": slippage
-      }
+    headers: {
+      Authorization: `Bearer ${process.env.ONE_INCH_API_KEY}`,
+    },
+    params: {
+      src: tokenIn,
+      dst: tokenOut,
+      amount: amountInParsed.toString(),
+      from: address,
+      origin: address,
+      slippage: slippage,
+    },
   };
   try {
     const response = await fetch(apiUrl, config);
-    console.log(response, "response");
     const data = await response.json();
 
     // 1inch swap info
@@ -63,7 +67,7 @@ export const POST = async (req: NextRequest) => {
 
     const transactions = [
       {
-        chainId: `${base.id}`,
+        chainId,
         to: to as `0x${string}`,
         data: calldata as `0x${string}`,
         value: value as string,
@@ -79,7 +83,7 @@ export const POST = async (req: NextRequest) => {
       });
 
       transactions.unshift({
-        chainId: `${base.id}`,
+        chainId,
         to: USDC_CONTRACT_ADDRESS_BASE,
         data: approveCalldata,
         value: BigInt(0).toString(),

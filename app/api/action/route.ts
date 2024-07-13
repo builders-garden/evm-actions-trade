@@ -4,8 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (req: NextRequest) => {
   const { searchParams } = new URL(req.url);
-  const tokenInput = searchParams.get("tokenInput");
-  const tokenOutput = searchParams.get("tokenOutput");
+  const tokenInput = searchParams.get("tokenIn");
+  const tokenOutput = searchParams.get("tokenOut");
   const amountIn = searchParams.get("amountIn");
 
   const targetUrl = new URL(appURL());

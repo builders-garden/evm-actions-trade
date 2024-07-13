@@ -9,7 +9,7 @@ export const GET = async (req: NextRequest) => {
   const amountIn = searchParams.get("amountIn");
   const chainId = searchParams.get("chainId");
 
-  const targetUrl = new URL(appURL());
+  const targetUrl = new URL(`${appURL()}/tx`);
   targetUrl.searchParams.set("tokenIn", tokenIn!);
   targetUrl.searchParams.set("tokenOut", tokenOut!);
   targetUrl.searchParams.set("amountIn", amountIn!);

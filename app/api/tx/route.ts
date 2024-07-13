@@ -1,33 +1,91 @@
 import { erc20Abi } from "@/lib/contracts/erc20abi";
-import { baseSepolia } from "viem/chains";
+import { base, baseSepolia } from "viem/chains";
 import { NextRequest, NextResponse } from "next/server";
-import { encodeFunctionData, parseUnits } from "viem";
+import { createPublicClient, encodeFunctionData, http, parseUnits } from "viem";
+import { NATIVE_ADDRESS, USDC_CONTRACT_ADDRESS_BASE } from "@/lib/constants";
 
 export const POST = async (req: NextRequest) => {
   const body = await req.json();
   const { address } = body;
+  const { searchParams } = new URL(req.url);
 
-  // Prepare amount to transfer
-  const amount = BigInt(parseUnits("1", 6));
+  // Public client
+  const publicClient = createPublicClient({ 
+    chain: base,
+    transport: http()
+  })
 
-  // Transfering 1 USDC to yourself
-  const calldata = encodeFunctionData({
-    abi: erc20Abi,
-    functionName: "transfer",
-    args: [address as `0x${string}`, amount] as const,
-  });
+  const tokenInput = searchParams.get('tokenIn'); //token address
+  const tokenOutput = searchParams.get('tokenOut'); //token address
+  const amountIn = searchParams.get('amountIn'); //amount in tokenIn
+  const slippage = "30"
+  const tokenIn = tokenInput === "0x0000000000000000000000000000000000000000" ? NATIVE_ADDRESS : tokenInput;
+  const tokenOut = tokenOutput === "0x0000000000000000000000000000000000000000" ? NATIVE_ADDRESS : tokenOutput;
 
-  const BASE_SEPOLIA_USDC_ADDRESS =
-    "0x036CbD53842c5426634e7929541eC2318f3dCF7e";
+  // get tokenInAddress decimals
+  let tokenInDecimals = 18;
+  if (tokenIn !== NATIVE_ADDRESS) {
+    tokenInDecimals = await publicClient.readContract({
+      address: tokenIn as `0x${string}`,
+      abi: erc20Abi,
+      functionName: "decimals",
+    });
+  }
+  const amountInParsed = parseUnits(amountIn!, tokenInDecimals);
 
-  return NextResponse.json({
-    transactions: [
-      {
-        chainId: `${baseSepolia.id}`,
-        to: BASE_SEPOLIA_USDC_ADDRESS,
-        data: calldata,
-        value: "0",
+  // 1inch swap request
+  const apiUrl = "https://api.1inch.dev/swap/v6.0/8453/swap";
+
+  const config = {
+      headers: {
+      "Authorization": "Bearer `${}`"
       },
-    ],
-  });
+      params: {
+        "src": tokenIn,
+        "dst": tokenOut,
+        "amount": amountInParsed.toString(),
+        "from": address,
+        "origin": address,
+        "slippage": slippage
+      }
+  };
+  try {
+    const response = await fetch(apiUrl, config);
+    const data = await response.json();
+
+    // 1inch swap info
+    const to = data.to;
+    const calldata = data.data;
+    const value = data.value;
+
+    const transactions = [
+      {
+        chainId: `${base.id}`,
+        to: to as `0x${string}`,
+        data: calldata as string,
+        value: value as string,
+      },
+    ];
+
+    // if tokenIn is not native token, approve tokenIn and push the transaction in the first position of thr array
+    if (tokenIn !== NATIVE_ADDRESS) {
+      const approveCalldata = encodeFunctionData({
+        abi: erc20Abi,
+        functionName: "approve",
+        args: [to, amountInParsed],
+      });
+
+      transactions.unshift({
+        chainId: `${base.id}`,
+        to: USDC_CONTRACT_ADDRESS_BASE,
+        data: approveCalldata,
+        value: BigInt(0).toString(),
+      });
+    }
+
+    return NextResponse.json({ transactions });
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
 };

@@ -4,8 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (req: NextRequest) => {
   const evmActionMetadata: EVMAction = {
-    title: "Sample EVM Action",
-    description: "This is a sample EVM Action",
+    title: "1inch trade EVM Action",
+    description: "This is a sample EVM Action for performing a trade on 1inch using 1inch API",
     image: "https://placehold.co/955x500",
     links: [
       {
@@ -14,25 +14,8 @@ export const GET = async (req: NextRequest) => {
         label: "Tx",
         type: ActionLinkType.TX,
       },
-      {
-        targetUrl: `${appURL()}/api/signature`,
-        postUrl: `${appURL()}/api/signature/success`, // this will be a POST HTTP call
-        label: "Signature",
-        type: ActionLinkType.SIGNATURE,
-      },
-      {
-        targetUrl: `${appURL()}/api/one-click-login`,
-        postUrl: appURL(), // this will be a GET HTTP call
-        label: "1-click login",
-        type: ActionLinkType.ONE_CLICK_LOGIN,
-      },
-      {
-        targetUrl: `https://builders.garden`,
-        label: "Link",
-        type: ActionLinkType.LINK,
-      },
     ],
-    label: "Sample Button",
+    label: "Trade tokens",
   };
   return NextResponse.json(evmActionMetadata);
 };

@@ -7,6 +7,7 @@ import { NATIVE_ADDRESS, USDC_CONTRACT_ADDRESS_BASE } from "@/lib/constants";
 export const POST = async (req: NextRequest) => {
   const body = await req.json();
   const { address } = body;
+  console.log(address, "address");
   const { searchParams } = new URL(req.url);
 
   // Public client
@@ -18,6 +19,7 @@ export const POST = async (req: NextRequest) => {
   const tokenInput = searchParams.get('tokenIn'); //token address
   const tokenOutput = searchParams.get('tokenOut'); //token address
   const amountIn = searchParams.get('amountIn'); //amount in tokenIn
+  console.log(tokenInput, tokenOutput, amountIn, "tokenInput, tokenOutput, amountIn");
   const slippage = 30; //slippage in percentage
   const tokenIn = tokenInput === "0x0000000000000000000000000000000000000000" ? NATIVE_ADDRESS : tokenInput;
   const tokenOut = tokenOutput === "0x0000000000000000000000000000000000000000" ? NATIVE_ADDRESS : tokenOutput;
@@ -51,6 +53,7 @@ export const POST = async (req: NextRequest) => {
   };
   try {
     const response = await fetch(apiUrl, config);
+    console.log(response, "response");
     const data = await response.json();
 
     // 1inch swap info

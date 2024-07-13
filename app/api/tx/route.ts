@@ -9,8 +9,8 @@ export const POST = async (req: NextRequest) => {
   const { address } = body;
   const { searchParams } = new URL(req.url);
 
-  const tokenInput = searchParams.get("tokenIn"); //token address
-  const tokenOutput = searchParams.get("tokenOut"); //token address
+  const tokenInput = searchParams.get("tokenIn")?.toLowerCase(); //token address
+  const tokenOutput = searchParams.get("tokenOut")?.toLowerCase(); //token address
   const amountIn = searchParams.get("amountIn"); //amount in tokenIn
   const chainId = searchParams.get("chainId"); //chainId
   const slippage = 30; //slippage in percentage
@@ -41,35 +41,32 @@ export const POST = async (req: NextRequest) => {
   const amountInParsed = parseUnits(amountIn!, tokenInDecimals);
 
   // 1inch swap request
-  const apiUrl = `https://api.1inch.dev/swap/v6.0/${chainId}/swap`;
+  const apiUrl = new URL(`https://api.1inch.dev/swap/v6.0/${chainId}/swap`);
+  apiUrl.searchParams.append("src", tokenIn!);
+  apiUrl.searchParams.append("dst", tokenOut!);
+  apiUrl.searchParams.append("amount", amountInParsed.toString());
+  apiUrl.searchParams.append("from", address);
+  apiUrl.searchParams.append("origin", address);
+  apiUrl.searchParams.append("slippage", slippage.toString());
 
-  const config = {
-    headers: {
-      Authorization: `Bearer ${process.env.ONE_INCH_API_KEY}`,
-    },
-    params: {
-      src: tokenIn,
-      dst: tokenOut,
-      amount: amountInParsed.toString(),
-      from: address,
-      origin: address,
-      slippage: slippage,
-    },
-  };
   try {
-    const response = await fetch(apiUrl, config);
-    const data = await response.json();
+    const response = await fetch(apiUrl, {
+      headers: {
+        Authorization: `Bearer ${process.env.ONE_INCH_API_KEY}`,
+        Accept: "application/json",
+      },
+    });
+    const resData = await response.json();
+    console.log(resData);
 
     // 1inch swap info
-    const to = data.to;
-    const calldata = data.data;
-    const value = data.value;
+    const { to, data, value } = resData.tx;
 
     const transactions = [
       {
         chainId,
         to: to as `0x${string}`,
-        data: calldata as `0x${string}`,
+        data: data as `0x${string}`,
         value: value as string,
       },
     ];

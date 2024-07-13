@@ -4,13 +4,13 @@ import { NextRequest, NextResponse } from "next/server";
 
 export const GET = async (req: NextRequest) => {
   const { searchParams } = new URL(req.url);
-  const tokenInput = searchParams.get("tokenIn");
-  const tokenOutput = searchParams.get("tokenOut");
+  const tokenIn = searchParams.get("tokenIn");
+  const tokenOut = searchParams.get("tokenOut");
   const amountIn = searchParams.get("amountIn");
 
   const targetUrl = new URL(appURL());
-  targetUrl.searchParams.set("tokenInput", tokenInput!);
-  targetUrl.searchParams.set("tokenOutput", tokenOutput!);
+  targetUrl.searchParams.set("tokenIn", tokenIn!);
+  targetUrl.searchParams.set("tokenOut", tokenOut!);
   targetUrl.searchParams.set("amountIn", amountIn!);
 
   const evmActionMetadata: EVMAction = {

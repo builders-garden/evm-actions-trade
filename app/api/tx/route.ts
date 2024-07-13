@@ -18,7 +18,7 @@ export const POST = async (req: NextRequest) => {
   const tokenInput = searchParams.get('tokenIn'); //token address
   const tokenOutput = searchParams.get('tokenOut'); //token address
   const amountIn = searchParams.get('amountIn'); //amount in tokenIn
-  const slippage = "30"
+  const slippage = 30; //slippage in percentage
   const tokenIn = tokenInput === "0x0000000000000000000000000000000000000000" ? NATIVE_ADDRESS : tokenInput;
   const tokenOut = tokenOutput === "0x0000000000000000000000000000000000000000" ? NATIVE_ADDRESS : tokenOutput;
 
@@ -38,7 +38,7 @@ export const POST = async (req: NextRequest) => {
 
   const config = {
       headers: {
-      "Authorization": "Bearer `${}`"
+      "Authorization": `Bearer ${process.env.ONE_INCH_API_KEY}`
       },
       params: {
         "src": tokenIn,
@@ -82,9 +82,7 @@ export const POST = async (req: NextRequest) => {
         value: BigInt(0).toString(),
       });
     }
-
     return NextResponse.json({ transactions });
-    console.log(data);
   } catch (error) {
     console.error(error);
   }

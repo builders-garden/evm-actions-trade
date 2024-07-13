@@ -62,7 +62,7 @@ export const POST = async (req: NextRequest) => {
       {
         chainId: `${base.id}`,
         to: to as `0x${string}`,
-        data: calldata as string,
+        data: calldata as `0x${string}`,
         value: value as string,
       },
     ];
